@@ -360,6 +360,9 @@
                 <a href="{{ route('purchase_history') }}" class="nav-link {{ request()->is('purchase*') ? 'active' : '' }}">
                     <i class="fas fa-ticket-alt me-1"></i> My Tickets
                 </a>
+                <a href="{{ route('my.contributions') }}" class="nav-link {{ request()->is('my-contributions*') ? 'active' : '' }}">
+                    <i class="fas fa-camera me-1"></i> My Photos
+                </a>
                 <a href="{{ route('view_profile') }}" class="nav-link {{ request()->is('view_profile*') || request()->is('edit_profile*') ? 'active' : '' }}">
                     <i class="fas fa-user me-1"></i> Profile
                 </a>

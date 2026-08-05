@@ -21,3 +21,10 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Local DB recovery dumps + sqlite binaries (may contain real user data)
+/.recovery
+# Local scratch images / notes, not app assets
+/gallery
+# Scratch dir used by verification runs
+/.verify-tmp

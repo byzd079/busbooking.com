@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\Bus;
 use App\Models\buslist;
+use App\Models\BusBehaviorScore;
+use App\Models\BusPost;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -13,6 +15,39 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class SearchController extends Controller
 {
+    /**
+     * Attach photo counts and conduct scores to a set of buses.
+     *
+     * Both lookups are keyed on buslists.id, so the coach_no -> buslist mapping
+     * is resolved once for the whole collection and the two aggregates are
+     * fetched in one query each, rather than per row.
+     */
+    private function attachCommunityData($buses): void
+    {
+        if ($buses->isEmpty()) {
+            return;
+        }
+
+        $buslistIds = buslist::whereIn('coach_no', $buses->pluck('coach_no')->unique())
+            ->pluck('id', 'coach_no');
+
+        $photoCounts = BusPost::visible()
+            ->whereIn('bus_id', $buslistIds->values())
+            ->selectRaw('bus_id, count(*) as total')
+            ->groupBy('bus_id')
+            ->pluck('total', 'bus_id');
+
+        $behavior = BusBehaviorScore::averagesForBuses($buslistIds->values()->all());
+
+        foreach ($buses as $bus) {
+            $buslistId = $buslistIds[$bus->coach_no] ?? null;
+
+            $bus->buslist_id   = $buslistId;
+            $bus->photo_count  = $buslistId ? (int) ($photoCounts[$buslistId] ?? 0) : 0;
+            $bus->behavior     = $buslistId ? ($behavior[$buslistId] ?? null) : null;
+        }
+    }
+
     public function search_bus(Request $request)
     {
         // Retrieve all form data
@@ -32,7 +67,9 @@ class SearchController extends Controller
             $buses = $buses->sortByDesc(function ($bus) {
                 return $bus->rating_data['average_rating'];
             })->values();
-    
+
+            $this->attachCommunityData($buses);
+
             return view('showbustable', compact('buses'));
         }
         // $departureDate = $request->input('depart-date');
@@ -80,7 +117,9 @@ class SearchController extends Controller
         $buses = $buses->sortByDesc(function ($bus) {
             return $bus->rating_data['average_rating'];
         })->values();
-        
+
+        $this->attachCommunityData($buses);
+
         // dd($buses);
         if ($buses != '[]') {
             return view('showbustable', compact('buses'));

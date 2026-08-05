@@ -70,3 +70,32 @@ services:
         sync: false
       - key: SSLCZ_STORE_PASSWORD
         sync: false
+      # --- Mail (fixlog B6) ---
+      # Render's free tier BLOCKS outbound SMTP (ports 25/465/587), so the Gmail
+      # SMTP setup that works locally CANNOT work here. An HTTP-API transport is
+      # required. Every option needs one composer package (see fixlog B6).
+      #
+      # MAIL_MAILER is intentionally left unset -> config/mail.php defaults to
+      # "log", so a password-reset email is written to the Render log stream
+      # instead of throwing. Set it only once a provider is actually configured.
+      - key: MAIL_MAILER
+        sync: false
+      # Must be an address the provider has VERIFIED, or sending is rejected.
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: JatraPoth
+      # Option A - Brevo (MAIL_MAILER=brevo): only provider that verifies a
+      # plain gmail.com sender (OTP), 300/day free, no domain needed.
+      - key: BREVO_API_KEY
+        sync: false
+      # Option B - AWS SES (MAIL_MAILER=ses)
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        value: us-east-1
+      # Option C - Postmark (MAIL_MAILER=postmark): needs a domain you own.
+      - key: POSTMARK_TOKEN
+        sync: false

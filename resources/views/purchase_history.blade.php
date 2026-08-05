@@ -90,10 +90,16 @@
                                     </a>
                                 @endif
 
-                                <!-- Seat Rating System Button -->
-                                <a href="{{ route('rate.trip.form', $bus->id) }}?trip_date={{ $bus->date }}&seats={{ urlencode(json_encode($seats)) }}"
+                                <!-- Combined trip rating: seat stars + conduct dimensions in one form -->
+                                <a href="{{ route('trip.rating.form', $item->id) }}"
                                     class="btn btn-warning w-100 py-2 fw-semibold">
                                     <i class="fas fa-star me-1"></i> Rate This Trip
+                                </a>
+
+                                <!-- Community gallery for this bus -->
+                                <a href="{{ route('bus.gallery', $bus->id) }}"
+                                    class="btn btn-outline-primary w-100 py-2 fw-semibold">
+                                    <i class="fas fa-camera me-1"></i> Photos &amp; Reports
                                 </a>
                                 @endif
 

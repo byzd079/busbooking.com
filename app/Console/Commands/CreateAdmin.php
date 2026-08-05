@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 
 class CreateAdmin extends Command
 {
-    protected $signature = 'admin:create {email} {password}';
+    protected $signature = 'admin:create {email} {password? : Omit to be prompted securely}';
 
     protected $description = 'Create a new admin account';
 
@@ -18,12 +18,24 @@ class CreateAdmin extends Command
         $email = $this->argument('email');
         $password = $this->argument('password');
 
+        if ($password === null) {
+            $password = $this->secret('Password (min 12 characters, input hidden)');
+            $confirmation = $this->secret('Confirm password');
+
+            if ($password !== $confirmation) {
+                $this->error('Passwords do not match.');
+                return 1;
+            }
+        } else {
+            $this->warn('Passing the password as an argument leaves it in your shell history. Omit it to be prompted instead.');
+        }
+
         $validator = Validator::make([
             'email' => $email,
             'password' => $password,
         ], [
             'email' => 'required|email|unique:admins,email',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:12',
         ]);
 
         if ($validator->fails()) {

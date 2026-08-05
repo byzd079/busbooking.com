@@ -2,6 +2,74 @@
 
 @section('title', 'Available Buses - JatraPoth')
 
+@section('styles')
+<style>
+    /* Community corner on each result card: a secondary, tappable strip that
+       stays visually below the fare and the Select Seats CTA. */
+    .gallery-corner {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        padding: .5rem .7rem;
+        min-height: var(--touch-target-min, 48px);
+        background: var(--primary-light, #eef2ff);
+        border: 1px solid rgba(79, 70, 229, .18);
+        border-radius: var(--border-radius-md, 8px);
+        text-decoration: none;
+        color: inherit;
+        transition: background .15s ease, border-color .15s ease;
+    }
+
+    .gallery-corner:hover,
+    .gallery-corner:focus-visible {
+        background: #e0e7ff;
+        border-color: rgba(79, 70, 229, .4);
+    }
+
+    .gallery-corner:focus-visible {
+        outline: 3px solid var(--primary, #4f46e5);
+        outline-offset: 2px;
+    }
+
+    .gc-icon {
+        flex: 0 0 auto;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #fff;
+        color: var(--primary, #4f46e5);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .9rem;
+    }
+
+    .gc-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+
+    .gc-title {
+        font-size: .84rem;
+        font-weight: 600;
+        color: var(--text-dark, #1e293b);
+        line-height: 1.25;
+    }
+
+    .gc-sub {
+        font-size: .74rem;
+        color: var(--text-muted, #64748b);
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .gc-arrow { color: var(--text-muted, #64748b); font-size: .75rem; flex: 0 0 auto; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .gallery-corner { transition: none; }
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-10">
@@ -88,6 +156,34 @@
                                 Reviews <i class="fas fa-external-link-alt ms-1" style="font-size:0.75rem;"></i>
                             </button>
                         </div>
+
+                        <!-- Passenger photos + conduct score: the community corner -->
+                        <a href="{{ route('bus.gallery', $bus->id) }}" class="gallery-corner mt-2">
+                            <span class="gc-icon">
+                                <i class="fas fa-camera"></i>
+                            </span>
+                            <span class="gc-text">
+                                <span class="gc-title">
+                                    @if(($bus->photo_count ?? 0) > 0)
+                                        {{ $bus->photo_count }} passenger {{ Str::plural('photo', $bus->photo_count) }}
+                                    @else
+                                        No photos yet
+                                    @endif
+                                </span>
+                                <span class="gc-sub">
+                                    @if(!empty($bus->behavior) && $bus->behavior['published'])
+                                        <i class="fas fa-clipboard-check"></i>
+                                        Conduct {{ number_format($bus->behavior['average'], 1) }}/5
+                                        &middot; {{ $bus->behavior['band']['label'] }}
+                                    @elseif(($bus->photo_count ?? 0) > 0)
+                                        Tap to see what riders posted
+                                    @else
+                                        Be the first to share one
+                                    @endif
+                                </span>
+                            </span>
+                            <i class="fas fa-chevron-right gc-arrow"></i>
+                        </a>
                     </div>
 
                     <!-- Journey Details (Route & Departure Time with Day/Night Theme) -->

@@ -7,6 +7,7 @@ use App\Models\user;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Session;
 
 class ForgotPasswordManager extends Controller
@@ -33,9 +34,25 @@ class ForgotPasswordManager extends Controller
         $forgot->email = $request->email;
         $forgot->token = $token;
         $forgot->save();
-        Mail::send('auth.email', ['token' => $token], function ($message) use ($request) {
-            $message->to($request->email)->subject('Reset Password');
-        });
+
+        try {
+            Mail::send('auth.email', ['token' => $token], function ($message) use ($request) {
+                $message->to($request->email)->subject('Reset Password');
+            });
+        } catch (\Throwable $e) {
+            // Do not leave a live reset token behind for a link the user never received.
+            $forgot->delete();
+
+            Log::error('Password reset email failed to send', [
+                'email' => $request->email,
+                'mailer' => config('mail.default'),
+                'exception' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('forgot_password.view')
+                ->withErrors(['email' => 'We could not send the reset email right now. Please try again in a few minutes, or contact support if it keeps failing.'])
+                ->withInput();
+        }
 
         return redirect()->route('forgot_password.view')
             ->with('status', 'We sent a password reset link to ' . $request->email . '. Check your inbox, including the spam folder.');

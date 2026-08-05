@@ -57,4 +57,56 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class);
     }
+
+    public function busPosts()
+    {
+        return $this->hasMany(BusPost::class);
+    }
+
+    public function postComments()
+    {
+        return $this->hasMany(PostComment::class);
+    }
+
+    public function behaviorScores()
+    {
+        return $this->hasMany(BusBehaviorScore::class);
+    }
+
+    public function helpfulMarks()
+    {
+        return $this->hasMany(PostHelpfulMark::class);
+    }
+
+    /**
+     * Check whether this user has a completed order for the given bus (matched
+     * by email, since orders.user_id does not exist). Used to set the verified-
+     * passenger badge when submitting a post or behavior score.
+     *
+     * orders.bus_id holds buses.id (validated `exists:buses,id`), but the caller
+     * passes a buslists.id. Resolve via coach_no, exactly as SeatRatingController
+     * does to avoid false negatives (real passenger not badged) and false positives
+     * (badge granted for the wrong coach when IDs collide in the low range).
+     */
+    public function hasCompletedOrderFor(int $buslistId): bool
+    {
+        $buslist = buslist::find($buslistId);
+
+        if (!$buslist) {
+            return false;
+        }
+
+        // orders.bus_id is a buses.id, but buslists and buses are separate tables.
+        // Match on coach_no to bridge the two domains.
+        $busIds = Bus::where('coach_no', $buslist->coach_no)->pluck('id');
+
+        if ($busIds->isEmpty()) {
+            return false;
+        }
+
+        return Order::where('email', $this->email)
+            ->whereIn('bus_id', $busIds)
+            ->where('status', 'Processing')  // 'Processing' = completed trip
+            ->exists();
+    }
 }
