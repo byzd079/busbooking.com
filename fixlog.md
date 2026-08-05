@@ -9,16 +9,19 @@ App: Laravel 11, PHP 8.2, repo root = `E:\busbooking.com\busbooking`, branch `ma
 
 | # | Problem | Fix |
 |---|---|---|
-| 1 | `package-lock.json` untracked in git → Docker `COPY package.json package-lock.json ./` fails, build dies at frontend stage | staged the lockfile (2878 lines); needs commit+push |
+| 1 | `package-lock.json` untracked → Docker `COPY package.json package-lock.json ./` fails, build dies at frontend stage | committed (`a79a8b7`); `npm ci --dry-run` passes, 50 pkgs resolve |
+| 2 | **Entire Render config untracked** — `Dockerfile`, `render.yaml`, `.dockerignore`, `docker/start.sh` existed locally but not in git, so Render had nothing to build | committed (`637e3cf`) |
+| 3 | Refund migration `2025_08_06_021748` was an empty stub, but `RefundController` reads those columns → every refund path 500s on a fresh Postgres DB | filled in 8 columns + `down()` (`637e3cf`) |
+| 4 | Laravel didn't trust Render's proxy → `url()`/`asset()` emit `http://`, mixed-content | `trustProxies(at: '*')` in `bootstrap/app.php` (`637e3cf`) |
 
 ## NEEDS TO SOLVE (blocking)
 
 | # | Problem | Action needed |
 |---|---|---|
-| B1 | `APP_KEY` marked `sync: false` in render.yaml — not auto-generated | run `php artisan key:generate --show` locally, paste into Render env tab |
-| B2 | `APP_URL` marked `sync: false` | set to `https://<service>.onrender.com` after first deploy |
-| B3 | SSLCommerz creds empty (`SSLCZ_STORE_ID` / `_PASSWORD` blank in .env) | user must supply, or payments stay broken |
-| B4 | Not pushed to GitHub yet | Render deploys from repo; local commits alone do nothing |
+| B1 | Nothing pushed yet — 2 commits sit local-only | `git push origin main` (awaiting user OK) |
+| B2 | `APP_KEY` is `sync: false` in render.yaml | run `php artisan key:generate --show`, paste into Render env tab |
+| B3 | `APP_URL` is `sync: false` | set to `https://<service>.onrender.com` after first deploy |
+| B4 | SSLCommerz creds blank | user must supply store ID + password |
 
 ## NEEDS TO SOLVE (non-blocking, before real traffic)
 
