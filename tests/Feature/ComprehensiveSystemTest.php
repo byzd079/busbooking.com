@@ -8,10 +8,19 @@ use App\Models\Bus;
 use App\Models\buslist;
 use App\Models\Order;
 use App\Models\Admin;
+use Database\Seeders\ProductionBusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ComprehensiveSystemTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(ProductionBusSeeder::class);
+    }
+
     /** @test */
     public function homepage_loads_successfully()
     {
@@ -113,7 +122,7 @@ class ComprehensiveSystemTest extends TestCase
             'ticketlist' => json_encode(['A1', 'A2'])
         ]);
 
-        $response = $this->get('/downloadTicket?order_id=' . $order->id);
+        $response = $this->get('/downloadTicket?order_id=' . $order->id . '&token=' . $order->downloadToken());
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/pdf');
     }

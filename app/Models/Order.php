@@ -21,6 +21,7 @@ class Order extends Model
         'currency', 
         'bus_id', 
         'ticketlist',
+        'card_issuer',
         'refund_amount',
         'refund_status',
         'refund_method',
@@ -30,6 +31,11 @@ class Order extends Model
         'refund_processed_at',
         'refund_processed_by'
     ];
+
+    public function downloadToken(): string
+    {
+        return hash_hmac('sha256', (string) $this->getKey(), (string) config('app.key'));
+    }
 
     // Calculate refund amount based on time policy
     public function calculateRefundAmount()

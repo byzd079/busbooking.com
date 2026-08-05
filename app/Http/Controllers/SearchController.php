@@ -175,11 +175,8 @@ class SearchController extends Controller
     }
     public function showdownloadinfo(Request $request)
     {
-        $bus_id = $request->input('bus_id');
-        $bus = Bus::find($bus_id);
-        $order_id = $request->input('order_id');
-        $order = Order::find($order_id);
-        // dd($order);
+        $order = $this->accessibleOrder($request);
+        $bus = Bus::findOrFail($order->bus_id);
         $ticketlist = json_decode($order->ticketlist, true);
         $card_issuer = $order->card_issuer;
         return view('showdownloadinfo', compact('bus', 'ticketlist', 'order', 'card_issuer'));
@@ -187,12 +184,29 @@ class SearchController extends Controller
 
     public function downloadTicket(Request $request)
     {
-        $order_id = $request->input('order_id');
-        $order = Order::find($order_id);
+        $order = $this->accessibleOrder($request);
         $ticketlist = json_decode($order->ticketlist, true);
-        $bus = bus::find($order->bus_id);
+        abort_unless(is_array($ticketlist) && $ticketlist !== [], 422, 'This order has no ticket seats.');
+
+        $bus = Bus::findOrFail($order->bus_id);
         $pdf = Pdf::loadView('downloadinfo', compact('bus', 'ticketlist', 'order'));
-        return $pdf->download();
+        return $pdf->download('JatraPoth-ticket-' . $order->transaction_id . '.pdf');
+    }
+
+    private function accessibleOrder(Request $request): Order
+    {
+        $orderId = $request->integer('order_id');
+        abort_if($orderId <= 0, 404);
+        $order = Order::findOrFail($orderId);
+        $providedToken = (string) $request->input('token');
+        $hasValidToken = $providedToken !== ''
+            && hash_equals($order->downloadToken(), $providedToken);
+        $ownsOrder = auth()->check()
+            && strcasecmp((string) auth()->user()->email, (string) $order->email) === 0;
+
+        abort_unless($hasValidToken || $ownsOrder, 403);
+
+        return $order;
     }
 
     public function seat_view($id)

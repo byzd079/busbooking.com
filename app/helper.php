@@ -14,8 +14,8 @@ function UpdateSeatInfo(Order $order, Bus $bus)
     $view = $bus->view;
     $ticketlist = json_decode($order->ticketlist, true);
 
-    if (!count($ticketlist)) {
-        return view('buyview');
+    if (!is_array($ticketlist) || $ticketlist === []) {
+        return false;
     }
 
 
@@ -26,15 +26,13 @@ function UpdateSeatInfo(Order $order, Bus $bus)
             $checkboxNames[] = $i . $j;
         }
     }
-    if (auth()->check()) {
-        for ($i = 0; $i < count($checkboxNames); $i++) {
-            if (in_array($checkboxNames[$i], $ticketlist)) {
-                if ($view[$i] == '1') {
-                    echo "Ticket is Booked by others";
-                } else {
-                    $newview[$i] = '1';
-                }
+    for ($i = 0; $i < count($checkboxNames); $i++) {
+        if (in_array($checkboxNames[$i], $ticketlist, true)) {
+            if (($view[$i] ?? '1') !== '0') {
+                return false;
             }
+
+            $newview[$i] = '1';
         }
     }
     $bus->view = $newview;
@@ -47,7 +45,8 @@ function UpdateSeatInfo(Order $order, Bus $bus)
     }
     $bus->seats_available = $seats_available;
     $bus->save();
-    // return view('showdownloadinfo', compact('bus', 'ticketlist'));
+
+    return true;
 }
 // IfNotFoundThenCreate function
 function IfNotFoundThenCreate($date)

@@ -72,6 +72,7 @@
             <form action="{{ route('downloadTicket') }}" method="GET" class="w-100">
                 @csrf
                 <input type="hidden" name="order_id" value="{{ $order->id }}">
+                <input type="hidden" name="token" value="{{ $order->downloadToken() }}">
                 <button type="submit" class="btn btn-primary-touch w-100 py-3 fw-bold text-uppercase">
                     <i class="fas fa-file-pdf me-2"></i> Download PDF E-Ticket
                 </button>

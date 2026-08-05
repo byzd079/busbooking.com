@@ -232,7 +232,7 @@ class SslCommerzNotification extends AbstractSslCommerz
 
     protected function setSuccessUrl()
     {
-        $this->successUrl = rtrim(config('app.url'), '/') . $this->config['success_url'];
+        $this->successUrl = $this->callbackBaseUrl() . $this->config['success_url'];
     }
 
     protected function getSuccessUrl()
@@ -242,7 +242,7 @@ class SslCommerzNotification extends AbstractSslCommerz
 
     protected function setFailedUrl()
     {
-        $this->failedUrl = rtrim(config('app.url'), '/') . $this->config['failed_url'];
+        $this->failedUrl = $this->callbackBaseUrl() . $this->config['failed_url'];
     }
 
     protected function getFailedUrl()
@@ -252,7 +252,7 @@ class SslCommerzNotification extends AbstractSslCommerz
 
     protected function setCancelUrl()
     {
-        $this->cancelUrl = rtrim(config('app.url'), '/') . $this->config['cancel_url'];
+        $this->cancelUrl = $this->callbackBaseUrl() . $this->config['cancel_url'];
     }
 
     protected function getCancelUrl()
@@ -262,12 +262,21 @@ class SslCommerzNotification extends AbstractSslCommerz
 
     protected function setIPNUrl()
     {
-        $this->ipnUrl = rtrim(config('app.url'), '/') . $this->config['ipn_url'];
+        $this->ipnUrl = $this->callbackBaseUrl() . $this->config['ipn_url'];
     }
 
     protected function getIPNUrl()
     {
         return $this->ipnUrl;
+    }
+
+    protected function callbackBaseUrl(): string
+    {
+        if (!app()->runningInConsole() && request()->getHost()) {
+            return rtrim(request()->getSchemeAndHttpHost(), '/');
+        }
+
+        return rtrim((string) config('app.url'), '/');
     }
 
     public function setParams($requestData)
