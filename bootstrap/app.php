@@ -11,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Render terminates HTTPS at its proxy before forwarding to Apache.
+        $middleware->trustProxies(at: '*');
+
         $middleware->validateCsrfTokens(except: [
             '/pay-via-ajax',
             '/success',
