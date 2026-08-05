@@ -19,9 +19,8 @@ use Illuminate\Support\Facades\Password;
 Route::get("/", function () {
     return view("homeview");
 })->name("home");
-Route::get("/extra", function () {
-    return view("createdata");
-})->name("extra");
+// Diagnostic routes removed before launch (N5):
+// /extra, /temporary, /layout, /master2, /example1, /test-bus-rating/{id}
 Route::get("/about", function () {
     return view("aboutview");
 })->name("about");
@@ -58,17 +57,13 @@ Route::get('/view_profile', [AuthController::class, 'view_profile'])->name('view
 Route::get('/edit_profile', [AuthController::class, 'edit_profile'])->name('edit_profile');
 Route::post('/update_profile', [AuthController::class, 'update_profile'])->name('update_profile');
 
-Route::get('/layout', function () {
-    return view('layout');
-});
-// web.php or routes/web.php
+// Diagnostic routes removed (N5): /layout, /temporary
 
 Route::get('change_password', [AuthController::class, 'change_password'])->name('change_password')->middleware('onlyuser');
 Route::post('update_password', [AuthController::class, 'update_password'])->name('update_password')->middleware('onlyuser');
 Route::get('/search_bus', [SearchController::class, 'search_bus'])->name('search_bus');
 Route::get('seat_management', [SearchController::class, 'seat_management'])->name('seat_management')->middleware('notguest');
 Route::get('/seat_view/{id}', [SearchController::class, 'seat_view'])->name('seat_view');
-Route::get('/temporary', [BusController::class, 'temporary'])->name('temporary'); //just for checking
 // Route::get('/showbustable', [YourControllerName::class, 'show_bus'])->name('show_bus');
 // Route::post('/showbustable', [SearchController::class, 'search_bus'])->name('search_bus');
 
@@ -82,8 +77,7 @@ Route::post('/resetPassword', [ForgotPasswordManager::class, 'resetPasswordPost'
 
 // payment gateway
 // SSLCOMMERZ Start
-Route::get('/example1', [SslCommerzPaymentController::class, 'exampleEasyCheckout']);
-// Route::get('/example2', [SslCommerzPaymentController::class, 'exampleHostedCheckout']);
+// Diagnostic routes removed (N5): /example1
 Route::get('/payment_details', [SearchController::class, 'payment_details'])->name('payment_details');
 route::get('/showdownloadinfo', [SearchController::class, 'showdownloadinfo'])->name('showdownloadinfo');
 Route::post('/pay', [SslCommerzPaymentController::class, 'index']);
@@ -96,9 +90,7 @@ Route::get('/cancel', [SslCommerzPaymentController::class, 'cancel'])->name('pay
 Route::post('/ipn', [SslCommerzPaymentController::class, 'ipn'])->name('payment.ipn');
 
 
-Route::get('/master2', function () {
-    return view('layout.navbar');
-});
+// Diagnostic routes removed (N5): /master2
 
 
 // REMOVED: AdminRegisterPost - hardcoded credentials, use `php artisan admin:create` instead
@@ -168,22 +160,7 @@ Route::get('/api/bus/{id}', function ($id) {
     ], 404);
 })->name('api.bus.show');
 
-// Test route for bus ratings
-Route::get('/test-bus-rating/{id}', function ($id) {
-    $bus = App\Models\Bus::find($id);
-    if ($bus) {
-        $ratingSummary = $bus->getRatingSummary();
-        return response()->json([
-            'success' => true,
-            'bus' => $bus,
-            'rating_summary' => $ratingSummary
-        ]);
-    }
-    return response()->json([
-        'success' => false,
-        'message' => 'Bus not found'
-    ], 404);
-})->name('test.bus.rating');
+// Diagnostic routes removed (N5): /test-bus-rating/{id}
 
 // Refund System Routes
 Route::middleware(['auth'])->group(function () {
