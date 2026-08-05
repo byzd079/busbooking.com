@@ -5,7 +5,6 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BusController;
 use App\Http\Controllers\CrudController;
-use App\Http\Controllers\CustomController;
 use App\Http\Controllers\ForgotPasswordManager;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SearchController;
@@ -84,7 +83,7 @@ Route::get('/payment_details', [SearchController::class, 'payment_details'])->na
 route::get('/showdownloadinfo', [SearchController::class, 'showdownloadinfo'])->name('showdownloadinfo');
 Route::post('/pay', [SslCommerzPaymentController::class, 'index']);
 Route::get('/downloadTicket', [SearchController::class, 'downloadTicket'])->name('downloadTicket');
-Route::post('/pay-via-ajax', [SslCommerzPaymentController::class, 'payViaAjax']);
+// Removed: /pay-via-ajax - method doesn't exist in controller
 
 Route::match(['get', 'post'], '/success', [SslCommerzPaymentController::class, 'success'])->name('payment.success');
 Route::post('/fail', [SslCommerzPaymentController::class, 'fail'])->name('payment.fail');
@@ -102,13 +101,15 @@ Route::get('/master2', function () {
 
 route::get('/purchase_history', [AuthController::class, 'purchase_history'])->name('purchase_history');
 
-// Route::get('/custom_register', [CustomController::class, 'custom_register'])->name('custom_register.view');
+// REMOVED: Public admin self-registration (security vulnerability)
+// Route::get('/custom_register', [CustomController::class, 'custom_register'])->name('custom_register');
 // Route::post('/custom_register', [CustomController::class, 'custom_registerPost'])->name('custom_registerPost');
-Route::get('/custom_register', [CustomController::class, 'custom_register'])->name('custom_register');
-Route::post('/custom_register', [CustomController::class, 'custom_registerPost'])->name('custom_registerPost');
+
 // Admin Login (public route)
 route::get('/admin_login', [AdminController::class, 'adminLogin'])->name('admin_login.view');
-Route::post('/admin_login', [AdminController::class, 'adminLoginPost'])->name('admin_login.post');
+Route::post('/admin_login', [AdminController::class, 'adminLoginPost'])
+    ->middleware('throttle:5,1')
+    ->name('admin_login.post');
 
 // Admin Routes (protected)
 Route::middleware(['admin'])->group(function () {
@@ -132,8 +133,8 @@ Route::middleware(['admin'])->group(function () {
     Route::post('/admin/generate-buses', [AdminController::class, 'processBulkGenerator'])->name('admin.generate.process');
 });
 
-// Custom login route
-Route::post('/custom_login', [CustomController::class, 'custom_loginPost'])->name('custom_loginPost');
+// REMOVED: Duplicate admin login route (security vulnerability)
+// Route::post('/custom_login', [CustomController::class, 'custom_loginPost'])->name('custom_loginPost');
 
 // Seat Rating System Routes
 Route::get('/seat-ratings-table', [\App\Http\Controllers\SeatRatingController::class, 'showSeatRatingsTable'])->name('seat.ratings.table');
