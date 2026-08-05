@@ -34,15 +34,20 @@ Route::get("/buy", function () {
 
 
 //admin pannel
-// Route::get('/showdata', [BusController::class, 'showdata']);
-Route::get('/createdata', [BusController::class, 'createdata'])->name('createdata.view');
-Route::post('/storedata', [BusController::class, 'storedata'])->name('createdata.store');
-Route::get('/editdata/{id}', [BusController::class, 'edit']);
-Route::post('/updatedata/{id}', [BusController::class, 'update']);
-Route::put('/bus/{bus}', [BusController::class, 'update'])->name('bus.update');
-Route::delete('/bus/{bus}', [BusController::class, 'destroy'])->name('bus.destroy');
-Route::get('/showdata', [BusController::class, 'showdata'])->name('showdata'); // buslist will be shown from admin panel
-route::get('/seat_info', [AdminController::class, 'seat_info'])->name('seat_info.view');
+// SECURITY: these routes create/edit/delete buses and expose the admin bus panel.
+// They previously sat outside every middleware group, so anyone could call
+// DELETE /bus/{id} or POST /storedata unauthenticated. Guarded with the same
+// 'admin' middleware the rest of the admin panel already uses.
+Route::middleware(['admin'])->group(function () {
+    Route::get('/createdata', [BusController::class, 'createdata'])->name('createdata.view');
+    Route::post('/storedata', [BusController::class, 'storedata'])->name('createdata.store');
+    Route::get('/editdata/{id}', [BusController::class, 'edit']);
+    Route::post('/updatedata/{id}', [BusController::class, 'update']);
+    Route::put('/bus/{bus}', [BusController::class, 'update'])->name('bus.update');
+    Route::delete('/bus/{bus}', [BusController::class, 'destroy'])->name('bus.destroy');
+    Route::get('/showdata', [BusController::class, 'showdata'])->name('showdata'); // buslist will be shown from admin panel
+    Route::get('/seat_info', [AdminController::class, 'seat_info'])->name('seat_info.view');
+});
 
 
 //user pannel
@@ -96,8 +101,7 @@ Route::get('/master2', function () {
 });
 
 
-// this function will only available for backend developer
-// route::get('/AdminRegisterPost', [AdminController::class, 'AdminRegisterPost'])->name('AdminRegisterPost');
+// REMOVED: AdminRegisterPost - hardcoded credentials, use `php artisan admin:create` instead
 
 route::get('/purchase_history', [AuthController::class, 'purchase_history'])->name('purchase_history');
 
@@ -195,6 +199,37 @@ Route::middleware(['admin'])->prefix('admin')->group(function () {
 
 
 //SSLCOMMERZ END
+
+
+// ---------------------------------------------------------------------------
+// Bus Community: photo gallery, comment threads, combined trip rating
+// ---------------------------------------------------------------------------
+
+// Public: anyone can browse a bus gallery and read the conduct score.
+Route::get('/bus/{busId}/gallery', [\App\Http\Controllers\BusPostController::class, 'index'])->name('bus.gallery');
+Route::get('/bus-post/{postId}/image', [\App\Http\Controllers\BusPostController::class, 'image'])->name('bus.post.image');
+Route::get('/bus-post/{postId}/comments', [\App\Http\Controllers\PostCommentController::class, 'index'])->name('post.comments');
+Route::get('/bus/{busId}/behavior-summary', [\App\Http\Controllers\TripRatingController::class, 'summary'])->name('bus.behavior.summary');
+
+// Signed-in: posting, replying, marking helpful, reporting.
+Route::middleware(['auth'])->group(function () {
+    Route::post('/bus-post', [\App\Http\Controllers\BusPostController::class, 'store'])->name('bus.post.store');
+    Route::post('/bus-post/{postId}/helpful', [\App\Http\Controllers\BusPostController::class, 'toggleHelpful'])->name('bus.post.helpful');
+    Route::post('/bus-post/{postId}/flag', [\App\Http\Controllers\BusPostController::class, 'flag'])->name('bus.post.flag');
+    Route::delete('/bus-post/{postId}', [\App\Http\Controllers\BusPostController::class, 'destroy'])->name('bus.post.destroy');
+
+    Route::post('/bus-post/{postId}/comment', [\App\Http\Controllers\PostCommentController::class, 'store'])->name('post.comment.store');
+    Route::put('/comment/{commentId}', [\App\Http\Controllers\PostCommentController::class, 'update'])->name('post.comment.update');
+    Route::delete('/comment/{commentId}', [\App\Http\Controllers\PostCommentController::class, 'destroy'])->name('post.comment.destroy');
+    Route::post('/comment/{commentId}/flag', [\App\Http\Controllers\PostCommentController::class, 'flag'])->name('post.comment.flag');
+
+    // Combined post-trip rating: seat stars + five conduct dimensions in one form.
+    Route::get('/rate-my-trip/{orderId}', [\App\Http\Controllers\TripRatingController::class, 'showForm'])->name('trip.rating.form');
+    Route::post('/rate-my-trip', [\App\Http\Controllers\TripRatingController::class, 'store'])->name('trip.rating.store');
+
+    // "My contributions" panel
+    Route::get('/my-contributions', [\App\Http\Controllers\UserContributionController::class, 'index'])->name('my.contributions');
+});
 
 
 // Official Seat Swapping System Routes
