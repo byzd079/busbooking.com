@@ -100,8 +100,7 @@ class SslCommerzPaymentController extends Controller
         $payment_options = $sslc->makePayment($post_data, 'hosted');
 
         if (!is_array($payment_options)) {
-            print_r($payment_options);
-            $payment_options = array();
+            return redirect()->back()->with('error', is_string($payment_options) ? $payment_options : 'Payment initiation failed.');
         }
     }
     public function success(Request $request)

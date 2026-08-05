@@ -58,7 +58,9 @@ abstract class AbstractSslCommerz implements SslCommerzInterface
         curl_setopt($curl, CURLOPT_URL, $this->getApiUrl());
         curl_setopt($curl, CURLOPT_HEADER, 0);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 15);
         curl_setopt($curl, CURLOPT_TIMEOUT, 60);
+        curl_setopt($curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 
         curl_setopt($curl, CURLOPT_POST, 1);
@@ -70,11 +72,10 @@ abstract class AbstractSslCommerz implements SslCommerzInterface
         $curlErrorNo = curl_errno($curl);
         curl_close($curl);
 
-        if ($code == 200 & !($curlErrorNo)) {
+        if ($code == 200 && !($curlErrorNo)) {
             return $response;
         } else {
-            return "FAILED TO CONNECT WITH SSLCOMMERZ API";
-            //return "cURL Error #:" . $err;
+            return "FAILED TO CONNECT WITH SSLCOMMERZ API" . ($err ? " ($err)" : " (HTTP $code)");
         }
     }
 
@@ -90,7 +91,8 @@ abstract class AbstractSslCommerz implements SslCommerzInterface
 
         // Check if json_decode was successful
         if ($sslcz === null) {
-            return ['status' => 'fail', 'data' => null, 'message' => 'Invalid response format'];
+            $msg = is_string($response) && !empty($response) ? $response : 'Invalid response format';
+            return ['status' => 'fail', 'data' => null, 'message' => $msg, 'failedreason' => $msg];
         }
 
         if ($type != 'checkout') {

@@ -214,8 +214,8 @@ class SslCommerzNotification extends AbstractSslCommerz
             if (!empty($formattedResponse['GatewayPageURL'])) {
                 $this->redirect($formattedResponse['GatewayPageURL']);
             } else {
-                // Check if failedreason exists before accessing it
-                $failedReason = isset($formattedResponse['failedreason']) ? $formattedResponse['failedreason'] : 'Unknown error';
+                // Check if failedreason or message exists before accessing it
+                $failedReason = isset($formattedResponse['failedreason']) ? $formattedResponse['failedreason'] : (isset($formattedResponse['message']) ? $formattedResponse['message'] : 'Unknown error');
                 
                 if (strpos($failedReason, 'Store Credential') === false) {
                     $message = $failedReason;
