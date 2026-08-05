@@ -11,6 +11,7 @@ mkdir -p \
 chown -R www-data:www-data storage bootstrap/cache
 
 php artisan migrate --force
+php artisan db:seed --class=ProductionBusSeeder --force
 php artisan optimize
 
 exec apache2-foreground
