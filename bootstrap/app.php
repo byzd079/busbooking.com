@@ -14,12 +14,17 @@ return Application::configure(basePath: dirname(__DIR__))
         // Render terminates HTTPS at its proxy before forwarding to Apache.
         $middleware->trustProxies(at: '*');
 
+        // Security headers: X-Frame-Options, CSP, HSTS, X-Content-Type-Options, Referrer-Policy
+        $middleware->append(\Bepsvpt\SecureHeaders\SecureHeadersMiddleware::class);
+
+        // SSLCommerz callbacks arrive as gateway-initiated requests without a session
+        // CSRF token, so they must stay exempt. Each handler validates the transaction
+        // against the gateway / enforces Pending-only state transitions instead.
         $middleware->validateCsrfTokens(except: [
-            '/pay-via-ajax',
             '/success',
-            '/cancel',
             '/fail',
-            '/ipn'
+            '/cancel',
+            '/ipn',
         ]);
         $middleware->alias([
             'onlyguest' => \App\Http\Middleware\OnlyGuest::class,

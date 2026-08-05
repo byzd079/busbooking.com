@@ -1,6 +1,7 @@
-@extends('layout')
+@extends('admin.layouts.admin')
 
-@section('title', 'Admin Executive Dashboard - JatraPoth')
+@section('title', 'Executive Dashboard')
+@section('page-title', 'Dashboard')
 
 @section('content')
 <div class="row justify-content-center">
@@ -17,9 +18,6 @@
                 <div class="d-flex gap-2">
                     <a href="{{ route('admin.generate.view') }}" class="btn btn-warning fw-bold">
                         <i class="fas fa-magic me-1"></i> Bulk Bus Generator
-                    </a>
-                    <a href="{{ route('adminLogOut') }}" class="btn btn-outline-danger">
-                        <i class="fas fa-sign-out-alt me-1"></i> Admin Logout
                     </a>
                 </div>
             </div>

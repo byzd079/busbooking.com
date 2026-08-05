@@ -1,5 +1,7 @@
-@extends('admin.layout')
+@extends('admin.layouts.admin')
 @section('title', 'Orders Management')
+@section('page-title', 'Orders Management')
+
 
 @section('content')
 <div class="row">

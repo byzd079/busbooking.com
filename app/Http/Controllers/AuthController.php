@@ -29,14 +29,8 @@ class AuthController extends Controller
             $data['password'] = bcrypt($validatedData['password']);
             $user = User::create($data);
 
-            if ($remember) {
-                $minutes = 60 * 24 * 30; // 30 days
-                setcookie('email', $request->input('email'), time() + ($minutes * 60));
-                setcookie('password', $request->input('password'), time() + ($minutes * 60));
-            } else {
-                setcookie('email', "", time() - 3600);
-                setcookie('password', "", time() - 3600);
-            }
+            // Removed: Insecure plaintext password storage in cookies
+            // Laravel's Auth::login() with $remember already handles secure "Remember Me" via encrypted session cookies
 
             Auth::login($user);
             Session::flash('success', 'Registration successful! Welcome to JatraPoth.');
@@ -58,15 +52,12 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials, $remember)) {
+            // Expire any legacy plaintext password cookies from older code
+            setcookie('password', '', time() - 3600, '/');
+
             Session::flash('success', 'Logged in successfully!');
-            if ($remember) {
-                $minutes = 60 * 24 * 30;
-                setcookie('email', $request->input('email'), time() + ($minutes * 60));
-                setcookie('password', $request->input('password'), time() + ($minutes * 60));
-            } else {
-                setcookie('email', "", time() - 3600);
-                setcookie('password', "", time() - 3600);
-            }
+            // Removed: Insecure plaintext password storage in cookies
+            // Laravel's Auth::attempt() with $remember already handles secure "Remember Me" via encrypted session cookies
 
             return redirect()->intended(route('home'));
         }

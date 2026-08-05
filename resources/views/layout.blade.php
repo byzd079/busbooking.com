@@ -305,9 +305,22 @@
             cursor: pointer;
             transition: all 0.2s ease;
             margin: 0.25rem 0.15rem;
+            /* Native button reset — these are <button> so keyboard/Enter/Space work for free */
+            font-family: inherit;
+            line-height: 1.5;
+            min-height: 38px;
+            text-align: left;
         }
 
         .qna-chip:hover {
+            background: #eff6ff;
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .qna-chip:focus-visible {
+            outline: 3px solid var(--primary);
+            outline-offset: 2px;
             background: #eff6ff;
             border-color: #2563eb;
             color: #2563eb;
@@ -460,11 +473,11 @@
                             <!-- Popular Quick Question Chips -->
                             <div class="mb-2">
                                 <small class="text-muted fw-bold d-block mb-1"><i class="fas fa-bolt text-warning me-1"></i> Tap for instant answers:</small>
-                                <span class="qna-chip" onclick="askAiQuestion('How do I swap my seat with another passenger?')">🔁 Seat Swap Guide</span>
-                                <span class="qna-chip" onclick="askAiQuestion('How do I download my PDF E-Ticket?')">📄 PDF Ticket Download</span>
-                                <span class="qna-chip" onclick="askAiQuestion('What is the refund and cancellation policy?')">💸 Refund Policy</span>
-                                <span class="qna-chip" onclick="askAiQuestion('How do seat ratings and reviews work?')">⭐ Seat Rating System</span>
-                                <span class="qna-chip" onclick="askAiQuestion('What payment methods are supported?')">💳 Payment Methods</span>
+                                <button type="button" class="qna-chip" onclick="askAiQuestion('How do I swap my seat with another passenger?')">🔁 Seat Swap Guide</button>
+                                <button type="button" class="qna-chip" onclick="askAiQuestion('How do I download my PDF E-Ticket?')">📄 PDF Ticket Download</button>
+                                <button type="button" class="qna-chip" onclick="askAiQuestion('What is the refund and cancellation policy?')">💸 Refund Policy</button>
+                                <button type="button" class="qna-chip" onclick="askAiQuestion('How do seat ratings and reviews work?')">⭐ Seat Rating System</button>
+                                <button type="button" class="qna-chip" onclick="askAiQuestion('What payment methods are supported?')">💳 Payment Methods</button>
                             </div>
 
                             <!-- Chat Messages Container -->

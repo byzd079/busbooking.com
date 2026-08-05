@@ -1,5 +1,7 @@
-@extends('admin.layout')
+@extends('admin.layouts.admin')
 @section('title', 'User Management')
+@section('page-title', 'User Management')
+
 
 @section('content')
 @php

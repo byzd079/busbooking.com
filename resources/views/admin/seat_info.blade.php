@@ -1,5 +1,7 @@
-@extends('admin.layout')
+@extends('admin.layouts.admin')
 @section('title', 'Seat Information')
+@section('page-title', 'Seat Information')
+
 
 @section('content')
 <div class="row">

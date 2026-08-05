@@ -74,6 +74,7 @@
         <div class="col-md-8 order-md-1">
             <h4 class="mb-3">Billing address</h4>
             <form method="POST" class="needs-validation" novalidate>
+                @csrf
                 <div class="row">
                     <div class="col-md-12 mb-3">
                         <label for="firstName">Full name</label>

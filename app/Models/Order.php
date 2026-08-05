@@ -11,15 +11,15 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'transaction_id', 
-        'name', 
-        'email', 
-        'phone', 
-        'amount', 
-        'status', 
-        'address', 
-        'currency', 
-        'bus_id', 
+        'transaction_id',
+        'name',
+        'email',
+        'phone',
+        'amount',
+        'status',
+        'address',
+        'currency',
+        'bus_id',
         'ticketlist',
         'card_issuer',
         'refund_amount',
@@ -29,7 +29,7 @@ class Order extends Model
         'refund_reason',
         'refund_requested_at',
         'refund_processed_at',
-        'refund_processed_by'
+        // Removed: 'refund_processed_by' - admins must set this explicitly, not via mass assignment
     ];
 
     public function downloadToken(): string

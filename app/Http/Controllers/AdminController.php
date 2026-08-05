@@ -30,25 +30,20 @@ class AdminController extends Controller
 
     public function adminLoginPost(Request $request)
     {
-        $credentials = $request->validate([
+        $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        $admin = Admin::where('email', $request->email)->first();
-        
-        if ($admin && Hash::check($request->password, $admin->password)) {
-            session()->put('admin_user', [
-                'id' => $admin->id,
-                'email' => $admin->email,
-            ]);
-            
-            Session::flash('success', 'Login Successful');
-            return redirect()->route('admin.dashboard');
+        if (Auth::guard('admin')->attempt(
+            $request->only('email', 'password'),
+            $request->boolean('remember')
+        )) {
+            $request->session()->regenerate();
+            return redirect()->intended(route('admin.dashboard'));
         }
 
-        Session::flash('error', 'Invalid credentials');
-        return redirect()->back()->withInput();
+        return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
     }
 
     public function admin_dashboard()
@@ -118,9 +113,10 @@ class AdminController extends Controller
 
     public function adminLogOut()
     {
-        session()->forget('admin_user');
-        Session::flash('success', 'Logged out successfully');
-        return redirect()->route('home');
+        Auth::guard('admin')->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        return redirect()->route('home')->with('success', 'Logged out successfully');
     }
 
     public function updateSeatLayout(Request $request)

@@ -1,4 +1,7 @@
-@extends('admin.layout')
+@extends('admin.layouts.admin')
+
+@section('title', 'Refund Requests')
+@section('page-title', 'Refund Requests')
 
 @section('content')
 <div class="container-fluid">

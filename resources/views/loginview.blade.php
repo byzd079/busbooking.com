@@ -42,7 +42,7 @@
                             <div class="input-group">
                                 <span class="input-group-text bg-light"><i class="fas fa-lock text-muted"></i></span>
                                 <input type="password" class="form-control" id="login_password" name="password"
-                                    placeholder="Enter your password" value="{{ $_COOKIE['password'] ?? '' }}" required>
+                                    placeholder="Enter your password" required>
                                 <button class="btn btn-outline-secondary" type="button" onclick="togglePass('login_password', this)">
                                     <i class="fas fa-eye"></i>
                                 </button>

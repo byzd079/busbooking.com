@@ -10,6 +10,7 @@
 <body>
     <h2>Add Bus Information</h2>
     <form action="submit_bus_info.php" method="POST">
+        @csrf
         <label for="departing_time">Departing Time:</label><br>
         <input type="text" id="departing_time" name="departing_time"><br><br>
 

@@ -1,6 +1,7 @@
-@extends('layout')
+@extends('admin.layouts.admin')
 
-@section('title', 'Bulk Bus Generator - Admin Panel')
+@section('title', 'Bulk Bus Generator')
+@section('page-title', 'Bulk Bus Schedule Generator')
 
 @section('content')
 <div class="row justify-content-center">

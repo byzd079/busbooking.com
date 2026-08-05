@@ -1,34 +1,10 @@
-@extends('admin.layout')
+@extends('admin.layouts.admin')
 
-@section('navbar')
+@section('title', 'Seat View')
+@section('page-title', 'Seat View')
+
+@section('styles')
 <link rel="stylesheet" href="{{ asset('css/seat-view.css') }}">
-<ul class="navbar-nav ms-auto">
-    <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin_show_all_user') }}">Users</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="{{ route('adminOrders') }}">Orders</a>
-    </li>
-    <li class="nav-item dropdown">
-        <a class="btn btn-primary dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
-            aria-expanded="false">
-            Seat Info
-        </a>
-        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="{{ url('showdata') }}">Buslist</a></li>
-            <li><a class="dropdown-item" href="{{ url('createdata') }}">Add Bus</a></li>
-        </ul>
-    </li>
-    <li class="nav-item">
-        <form action="{{ route('admin.dashboard') }}" method="GET">
-            @csrf
-            <button type="submit" class="btn btn-link nav-link">Logout</button>
-        </form>
-    </li>
-</ul>
 @endsection
 
 @section('content')

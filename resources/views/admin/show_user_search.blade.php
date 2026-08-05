@@ -1,43 +1,8 @@
-@extends('admin.layout')
-@section('navbar')
-<ul class="navbar-nav ms-auto">
+@extends('admin.layouts.admin')
 
-    <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
+@section('title', 'User Search')
+@section('page-title', 'User Search')
 
-    </li>
-    <li class="nav-item">
-        <a href="{{ route('admin_show_all_user') }}" class="btn btn-primary">Users</a>
-    </li>
-    <li class=" nav-item">
-        <a class="nav-link" href="{{ route('adminOrders') }}">Orders</a>
-    </li>
-    {{-- <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin.dashboard') }}">Add Bus</a>
-    </li> --}}
-    <li class="nav-item dropdown">
-        <a class="nav-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Manage Bus
-        </a>
-        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="{{ url('showdata') }}">Buslist</a></li>
-            <li><a class="dropdown-item" href="{{ url('createdata') }}">Add Bus</a></li>
-            <li><a class="dropdown-item" href="{{ route('admin_seat_info_button') }}">Seat Info</a></li>
-        </ul>
-    </li>
-
-
-
-
-    <form action="{{ route('admin.dashboard') }}" method="GET">
-        @csrf
-        <button type="submit" class="btn btn-link nav-link">Logout</button>
-    </form>
-
-    </li>
-</ul>
-
-@endsection
 @section('content')
 <div class="container">
     <h2 class="my-4">Search User by Mobile Number, Email, or Name</h2>
