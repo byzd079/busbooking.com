@@ -50,84 +50,71 @@ class SearchController extends Controller
 
     public function search_bus(Request $request)
     {
-        // Retrieve all form data
-        $date = $request->input('date');
-        $starting_point = $request->input('starting_point');
-        $ending_point = $request->input('ending_point');
-        if (empty($date) && empty($starting_point) && empty($ending_point)) {
-            $today  = Carbon::today()->toDateString();
-            $buses  = bus::where('date', $today)->get();
-            
-            // Add bus ratings to each bus
-            foreach ($buses as $bus) {
-                $bus->rating_data = $bus->getRatingSummary();
-            }
-            
-            // Sort buses by rating (highest first)
-            $buses = $buses->sortByDesc(function ($bus) {
-                return $bus->rating_data['average_rating'];
-            })->values();
+        // Normalise every input up front. Trimming here (and TRIM() on the
+        // column side below) makes route matching whitespace-insensitive.
+        $date           = trim((string) $request->input('date'));
+        $starting_point = trim((string) $request->input('starting_point'));
+        $ending_point   = trim((string) $request->input('ending_point'));
+        $bus_name       = trim((string) $request->input('bus_name'));
 
-            $this->attachCommunityData($buses);
+        // Nothing was asked for: show today's departures, best-rated first.
+        if ($date === '' && $starting_point === '' && $ending_point === '' && $bus_name === '') {
+            $today = Bus::where('date', Carbon::today()->toDateString())->get();
 
-            return view('showbustable', compact('buses'));
+            return $this->presentBuses($today);
         }
-        // $departureDate = $request->input('depart-date');
-        // $returnDate = $request->input('return-date');
 
-        // $bus = bus::where('date', $date)->get();
-        // if ($bus != '[]') {
-        //     $buses = bus::where('date', $date)
-        //         ->where('starting_point', $starting_point)
-        //         ->where('ending_point', $ending_point)->get();
-        //     if ($buses != '[]') {
-        //         return view('showbustable', compact('buses'));
-        //     }
-        //     Session::flash('msg', 'No Bus Found In This Route');
+        // A concrete journey date was chosen: materialise that day's inventory
+        // from the master schedule before we search it.
+        $query = Bus::query();
 
-        //     return view('showbustable', compact('buses'));
-        // } else {
-        //     $bus = buslist::all();
-        //     foreach ($bus as $key => $value) {
-        //         $newbus = new bus();
-        //         $newbus->date = $date;
-        //         $newbus->bus_name = $value->bus_name;
-        //         $newbus->departing_time = $value->departing_time;
-        //         $newbus->coach_no = $value->coach_no;
-        //         $newbus->starting_point = $value->starting_point;
-        //         $newbus->ending_point = $value->ending_point;
-        //         $newbus->fare = $value->fare;
-        //         $newbus->coach_type = $value->coach_type;
-        //         $newbus->seats_available = $value->seats_available;
-        //         $newbus->view = $value->view;
-        //         $newbus->save();
-        //     }
-        // dd($request->all());
-        IfNotFoundThenCreate($date);
-        $buses = bus::where('date', $date)
-            ->where('starting_point', $starting_point)
-            ->where('ending_point', $ending_point)->get();
-        
-        // Add bus ratings to each bus
+        if ($date !== '') {
+            IfNotFoundThenCreate($date);
+            $query->where('date', $date);
+        }
+
+        // Case- and whitespace-insensitive route matching. whereRaw with a
+        // bound parameter keeps this portable (SQLite locally, Postgres in
+        // production) and safe from injection — never ILIKE, never interpolation.
+        if ($starting_point !== '') {
+            $query->whereRaw('LOWER(TRIM(starting_point)) = ?', [strtolower($starting_point)]);
+        }
+
+        if ($ending_point !== '') {
+            $query->whereRaw('LOWER(TRIM(ending_point)) = ?', [strtolower($ending_point)]);
+        }
+
+        // Partial, case-insensitive operator match. Standing alone (no route)
+        // this lets a passenger find every trip a given operator runs.
+        if ($bus_name !== '') {
+            $query->whereRaw('LOWER(bus_name) LIKE ?', ['%' . strtolower($bus_name) . '%']);
+        }
+
+        return $this->presentBuses($query->get());
+    }
+
+    /**
+     * Decorate a set of buses and hand off to the results view.
+     *
+     * Every search branch funnels through here so ratings, ordering and the
+     * community data attach are applied identically. The view renders its own
+     * empty state, so there is nothing to flash when the set comes back empty.
+     */
+    private function presentBuses($buses)
+    {
+        // Attach each bus's rating summary.
         foreach ($buses as $bus) {
             $bus->rating_data = $bus->getRatingSummary();
         }
-        
-        // Sort buses by rating (highest first)
+
+        // Highest-rated first.
         $buses = $buses->sortByDesc(function ($bus) {
             return $bus->rating_data['average_rating'];
         })->values();
 
         $this->attachCommunityData($buses);
 
-        // dd($buses);
-        if ($buses != '[]') {
-            return view('showbustable', compact('buses'));
-        }
-        Session::flash('msg', 'No Bus Found In This Route');
-
         return view('showbustable', compact('buses'));
-        // }
     }
     // create a function named  'payment_details'
     public function payment_details(Request $request)

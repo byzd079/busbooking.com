@@ -14,6 +14,29 @@
             <p class="text-muted mb-0">Your bus ticket has been successfully booked.</p>
         </div>
 
+        {{-- A3 tail: a guest who just checked out has an auto-created, unclaimed
+             account (no password). Invite them to set one so they can return. --}}
+        @auth
+            @if(Auth::user()->isUnclaimed())
+            <div class="glass-card mb-4 border-start border-4 border-primary">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="fs-3 text-primary"><i class="fas fa-user-shield"></i></div>
+                    <div class="flex-grow-1">
+                        <h2 class="h6 fw-bold text-dark mb-1">Save this booking to an account</h2>
+                        <p class="text-muted small mb-3">
+                            We created an account for you from your booking details. Set a
+                            password so you can log in later with your <strong>mobile number
+                            or email</strong> and view your tickets any time.
+                        </p>
+                        <a href="{{ route('claim_account') }}" class="btn btn-primary-touch fw-bold">
+                            <i class="fas fa-key me-2"></i> Set a Password
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endif
+        @endauth
+
         <!-- Ticket Info Card -->
         <div class="glass-card mb-4">
             <h2 class="h5 fw-bold text-dark border-bottom pb-3 mb-3">

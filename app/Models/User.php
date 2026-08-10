@@ -47,6 +47,16 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * An auto-created (guest checkout) account has no password until the owner
+     * claims it. A NULL password can never satisfy Auth::attempt(), so these
+     * accounts stay locked until claimed via the claim / forgot-password flow.
+     */
+    public function isUnclaimed(): bool
+    {
+        return $this->password === null;
+    }
+
     // Relationships
     public function seatRatings()
     {

@@ -29,11 +29,11 @@
                     <form action="{{ url('log_in') }}" method="POST">
                         @csrf
                         <div class="mb-3">
-                            <label for="login_email" class="form-label">Email Address</label>
+                            <label for="login_identifier" class="form-label">Email or Mobile Number</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-envelope text-muted"></i></span>
-                                <input type="email" class="form-control" id="login_email" name="email"
-                                    placeholder="your@email.com" value="{{ $_COOKIE['email'] ?? old('email') }}" required>
+                                <span class="input-group-text bg-light"><i class="fas fa-user text-muted"></i></span>
+                                <input type="text" class="form-control" id="login_identifier" name="login"
+                                    placeholder="your@email.com or 01712345678" value="{{ old('login', $_COOKIE['email'] ?? old('email')) }}" required>
                             </div>
                         </div>
 

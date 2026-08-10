@@ -16,9 +16,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 
-Route::get("/", function () {
-    return view("homeview");
-})->name("home");
+Route::get("/", [HomeController::class, 'home'])->name("home");
 // Diagnostic routes removed before launch (N5):
 // /extra, /temporary, /layout, /master2, /example1, /test-bus-rating/{id}
 Route::get("/about", function () {
@@ -78,9 +76,21 @@ Route::post('/resetPassword', [ForgotPasswordManager::class, 'resetPasswordPost'
 // payment gateway
 // SSLCOMMERZ Start
 // Diagnostic routes removed (N5): /example1
+// A3 hybrid guest checkout: booking is open to guests all the way through
+// payment. Anyone may search, pick seats, open /payment_details and pay without
+// logging in first — SslCommerzPaymentController@index auto-provisions an
+// account from the billing details at pay time. These two routes are therefore
+// intentionally NOT behind 'onlyuser'.
 Route::get('/payment_details', [SearchController::class, 'payment_details'])->name('payment_details');
-route::get('/showdownloadinfo', [SearchController::class, 'showdownloadinfo'])->name('showdownloadinfo');
 Route::post('/pay', [SslCommerzPaymentController::class, 'index']);
+
+// A3 tail: a signed-in user with an unclaimed (auto-created) account sets a
+// password here so they can log back in later with their mobile or email.
+Route::middleware(['auth'])->group(function () {
+    Route::get('/claim-account', [AuthController::class, 'claim_account'])->name('claim_account');
+    Route::post('/claim-account', [AuthController::class, 'claim_account_post'])->name('claim_account.post');
+});
+route::get('/showdownloadinfo', [SearchController::class, 'showdownloadinfo'])->name('showdownloadinfo');
 Route::get('/downloadTicket', [SearchController::class, 'downloadTicket'])->name('downloadTicket');
 // Removed: /pay-via-ajax - method doesn't exist in controller
 

@@ -17,7 +17,10 @@ class CheckNotGuest
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::guest()) {
-            return redirect()->route('login')->with('error', 'Please login to access this page.');
+            // Preserve the intended URL (seat ticks live in the query string)
+            // so logging in resumes the booking instead of dumping the user home.
+            return redirect()->guest(route('login'))
+                ->with('error', 'Please sign in to confirm your seats — your selection has been saved.');
         }
 
         return $next($request);

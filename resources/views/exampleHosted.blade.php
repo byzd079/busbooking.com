@@ -60,6 +60,17 @@
                 <i class="fas fa-user-check text-success me-2"></i> Passenger & Billing Details
             </h2>
 
+            @guest
+            <div class="alert alert-info d-flex align-items-start gap-2 py-2 px-3 small mb-3" role="alert">
+                <i class="fas fa-info-circle mt-1"></i>
+                <div>
+                    No account needed to book. We'll create one from these details so you
+                    can track this booking — afterwards you can set a password to log in
+                    later with your mobile or email.
+                </div>
+            </div>
+            @endguest
+
             <form action="{{ url('/pay') }}" method="POST">
                 @csrf
                 <input type="hidden" name="amount" value="{{ $totalFare }}" />

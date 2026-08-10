@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Services\RouteInsights;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +16,7 @@ class ProductionBusSeeder extends Seeder
                 'departing_time' => '08:00',
                 'coach_no' => 'DH-1001',
                 'starting_point' => 'Dhaka',
-                'ending_point' => 'Chittagong',
+                'ending_point' => 'Chattogram',
                 'fare' => 650,
                 'coach_type' => 'AC',
             ],
@@ -24,7 +25,7 @@ class ProductionBusSeeder extends Seeder
                 'departing_time' => '14:30',
                 'coach_no' => 'DH-1002',
                 'starting_point' => 'Dhaka',
-                'ending_point' => 'Chittagong',
+                'ending_point' => 'Chattogram',
                 'fare' => 550,
                 'coach_type' => 'Non-AC',
             ],
@@ -41,7 +42,7 @@ class ProductionBusSeeder extends Seeder
                 'bus_name' => 'Hanif Enterprise',
                 'departing_time' => '23:30',
                 'coach_no' => 'CH-2001',
-                'starting_point' => 'Chittagong',
+                'starting_point' => 'Chattogram',
                 'ending_point' => 'Dhaka',
                 'fare' => 680,
                 'coach_type' => 'AC',
@@ -53,6 +54,24 @@ class ProductionBusSeeder extends Seeder
                 'starting_point' => 'Dhaka',
                 'ending_point' => 'Khulna',
                 'fare' => 800,
+                'coach_type' => 'AC',
+            ],
+            [
+                'bus_name' => 'Saint Martin Paribahan',
+                'departing_time' => '20:30',
+                'coach_no' => 'DH-1005',
+                'starting_point' => 'Dhaka',
+                'ending_point' => "Cox's Bazar",
+                'fare' => 1200,
+                'coach_type' => 'AC',
+            ],
+            [
+                'bus_name' => 'Desh Travels',
+                'departing_time' => '09:45',
+                'coach_no' => 'DH-1006',
+                'starting_point' => 'Dhaka',
+                'ending_point' => 'Rajshahi',
+                'fare' => 750,
                 'coach_type' => 'AC',
             ],
         ];
@@ -74,6 +93,21 @@ class ProductionBusSeeder extends Seeder
             );
         }
 
+        // Canonicalise the legacy "Chittagong" spelling to "Chattogram" across
+        // inventory already materialised on earlier seeds, so the master
+        // schedule, the dated buses, the popular-route chips and the search
+        // form all agree on one spelling. Idempotent: a re-run matches nothing.
+        foreach (['buslists', 'buses'] as $table) {
+            DB::table($table)->where('starting_point', 'Chittagong')
+                ->update(['starting_point' => 'Chattogram']);
+            DB::table($table)->where('ending_point', 'Chittagong')
+                ->update(['ending_point' => 'Chattogram']);
+        }
+
         $this->call(BulkBusSeeder::class);
+
+        // The schedule changed; drop the memoised route aggregates so the home
+        // page reflects the new routes on the next request instead of after TTL.
+        RouteInsights::flush();
     }
 }

@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use App\Library\SslCommerz\SslCommerzNotification;
 use Illuminate\Support\Str;
 use App\Models\Order;
+use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Auth;
 
 class SslCommerzPaymentController extends Controller
 {
@@ -83,9 +86,19 @@ class SslCommerzPaymentController extends Controller
 
 
         #Before  going to initiate the payment order status need to insert or update as Pending.
+
+        // ---------------------------------------------------------------------
+        // A3 hybrid guest checkout: resolve the account this order belongs to
+        // BEFORE writing the order. Security rules are deliberately strict —
+        // unauthenticated billing input must never be able to take over a real
+        // account.
+        // ---------------------------------------------------------------------
+        $userId = $this->resolveOrderUser($validated);
+
         $update_product = Order::updateOrCreate(
             ['transaction_id' => $post_data['tran_id']],
             [
+                'user_id' => $userId,
                 'name' => $post_data['cus_name'],
                 'email' => $post_data['cus_email'],
                 'phone' => $post_data['cus_phone'],
@@ -108,6 +121,61 @@ class SslCommerzPaymentController extends Controller
             return redirect()->back()->with('error', is_string($payment_options) ? $payment_options : 'Payment initiation failed.');
         }
     }
+
+    /**
+     * Resolve the user id to stamp on a new order (A3 guest checkout).
+     *
+     * @param  array{customer_name:string,customer_email:string,customer_mobile:string}  $validated
+     */
+    private function resolveOrderUser(array $validated): ?int
+    {
+        // (a) Already authenticated: trust the session, create nothing.
+        if (Auth::check()) {
+            return Auth::id();
+        }
+
+        // (b) Guest. Look for an account that already owns this email OR mobile.
+        $existing = User::where('email', $validated['customer_email'])
+            ->orWhere('mobile_no', $validated['customer_mobile'])
+            ->first();
+
+        if ($existing) {
+            // A real account matches. Link the order to it for history/tracking,
+            // but DO NOT log the guest in as them and DO NOT modify that account.
+            // Anyone can type someone else's email/phone into a billing form —
+            // we never hijack a real account from unauthenticated input.
+            return $existing->id;
+        }
+
+        // (c) No match: auto-provision a NEW, unclaimed account (password = null).
+        try {
+            $newUser = User::create([
+                'name' => $validated['customer_name'],
+                'email' => $validated['customer_email'],
+                'mobile_no' => $validated['customer_mobile'],
+                'password' => null, // NULL marks an unclaimed auto-created account
+            ]);
+        } catch (QueryException $e) {
+            // Race: a concurrent request inserted the same email/mobile between
+            // our lookup and insert (unique(email)/unique(mobile_no) violation).
+            // Re-fetch and attach by id — but treat it as pre-existing, so we do
+            // NOT log in on this path (only a freshly created account is logged in).
+            $raced = User::where('email', $validated['customer_email'])
+                ->orWhere('mobile_no', $validated['customer_mobile'])
+                ->first();
+
+            return $raced?->id;
+        }
+
+        // Only ever auto-login a FRESHLY created account, never a pre-existing
+        // one. wasRecentlyCreated is true only for the insert we just performed.
+        if ($newUser->wasRecentlyCreated) {
+            Auth::login($newUser);
+        }
+
+        return $newUser->id;
+    }
+
     public function success(Request $request)
     {
         $tran_id = trim((string) $request->input('tran_id'));
