@@ -14,10 +14,11 @@ RUN apt-get update \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
         libpng-dev \
+        libwebp-dev \
         libpq-dev \
         libzip-dev \
         unzip \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j$(nproc) gd pdo_pgsql zip \
     && a2enmod rewrite \
     && sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
@@ -25,6 +26,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
+# Raise PHP's upload/POST/memory ceilings so multi-MB phone photos are accepted
+# (the app validates the real 8 MB limit itself). Placed in the conf.d scan dir
+# so it merges with the stock php.ini.
+COPY docker/php-uploads.ini /usr/local/etc/php/conf.d/zz-uploads.ini
 
 WORKDIR /var/www/html
 COPY . .
