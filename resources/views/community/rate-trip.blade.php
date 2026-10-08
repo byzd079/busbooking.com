@@ -253,10 +253,10 @@
                     @for($i = 5; $i >= 1; $i--)
                     <input type="radio"
                            name="seat_ratings[{{ $seat }}]"
-                           id="seat_{{ $loop->parent->index }}_{{ $i }}"
+                           id="seat_{{ $loop->index }}_{{ $i }}"
                            value="{{ $i }}"
                            {{ (int) $seatCurrent === $i ? 'checked' : '' }}>
-                    <label for="seat_{{ $loop->parent->index }}_{{ $i }}" title="{{ $i }} out of 5">
+                    <label for="seat_{{ $loop->index }}_{{ $i }}" title="{{ $i }} out of 5">
                         <i class="fas fa-star" aria-hidden="true"></i>
                         <span class="visually-hidden">Seat {{ $seat }}: {{ $i }} {{ Str::plural('star', $i) }}</span>
                     </label>

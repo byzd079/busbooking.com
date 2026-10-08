@@ -24,6 +24,12 @@
 
         <!-- Request Form Card -->
         <div class="glass-card">
+            @if($order->getSwapDeadline())
+            <div class="alert alert-info py-2 small mb-4">
+                <i class="fas fa-clock me-1"></i> Seat swapping is permitted until 1 hour after departure (Deadline: {{ $order->getSwapDeadline()->format('h:i A, d M Y') }}).
+            </div>
+            @endif
+
             <form action="{{ route('seat.swap.request') }}" method="POST">
                 @csrf
                 <input type="hidden" name="requester_order_id" value="{{ $order->id }}">

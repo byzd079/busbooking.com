@@ -645,9 +645,9 @@
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
-        // Auto-dismiss alerts after 5 seconds
+        // Auto-dismiss dismissible flash alerts after 5 seconds
         setTimeout(() => {
-            document.querySelectorAll('.alert').forEach(alert => {
+            document.querySelectorAll('.alert.alert-dismissible').forEach(alert => {
                 const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
                 if (bsAlert) bsAlert.close();
             });

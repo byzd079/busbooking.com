@@ -116,6 +116,13 @@
         cursor: not-allowed;
     }
 
+    .seat-item.held {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        color: #b45309;
+        cursor: not-allowed;
+    }
+
     .seat-item.broken {
         background: #fee2e2;
         border-color: #fca5a5;
@@ -322,24 +329,29 @@
                                     
                                     $isBooked = ($statusChar === '1');
                                     $isBroken = ($statusChar === '2');
-                                    $isAvailable = ($statusChar === '0');
+                                    $isHeld = in_array($seatName, $heldSeats ?? [], true);
+                                    $isAvailable = ($statusChar === '0' && !$isHeld);
                                 @endphp
 
                                 @if ($c == 3)
                                     <div class="aisle-gap"></div>
                                 @endif
 
-                                @if ($isAvailable)
-                                    <div class="seat-item available" data-seat="{{ $seatName }}" title="Seat {{ $seatName }} - Available">
-                                        <input type="checkbox" name="{{ $seatName }}" value="1" class="seat-checkbox">
+                                @if ($isBooked)
+                                    <div class="seat-item booked" title="Seat {{ $seatName }} - Booked">
                                         <span>{{ $seatName }}</span>
                                     </div>
-                                @elseif ($isBooked)
-                                    <div class="seat-item booked" title="Seat {{ $seatName }} - Booked">
+                                @elseif ($isHeld)
+                                    <div class="seat-item held" title="Seat {{ $seatName }} - Temporarily On Hold (Payment in progress)">
                                         <span>{{ $seatName }}</span>
                                     </div>
                                 @elseif ($isBroken)
                                     <div class="seat-item broken" title="Seat {{ $seatName }} - Out of Service">
+                                        <span>{{ $seatName }}</span>
+                                    </div>
+                                @elseif ($isAvailable)
+                                    <div class="seat-item available" data-seat="{{ $seatName }}" title="Seat {{ $seatName }} - Available">
+                                        <input type="checkbox" name="{{ $seatName }}" value="1" class="seat-checkbox">
                                         <span>{{ $seatName }}</span>
                                     </div>
                                 @endif
@@ -349,9 +361,10 @@
                 </div>
 
                 <!-- Legend Box -->
-                <div class="legend-box">
+                <div class="legend-box flex-wrap gap-2">
                     <div><span class="legend-indicator" style="background:#ffffff; border:2px solid #10b981;"></span> Available</div>
                     <div><span class="legend-indicator" style="background:var(--primary);"></span> Selected</div>
+                    <div><span class="legend-indicator" style="background:#fef3c7; border:2px solid #f59e0b;"></span> On Hold</div>
                     <div><span class="legend-indicator" style="background:#f1f5f9; border:1px solid #cbd5e1;"></span> Booked</div>
                 </div>
             </div>

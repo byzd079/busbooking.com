@@ -84,7 +84,7 @@
                                 </form>
 
                                 <!-- Official Seat Swap Trigger -->
-                                @if($item->status === 'Processing' || $item->status === 'Successful')
+                                @if(($item->status === 'Processing' || $item->status === 'Successful') && $item->canSwapSeats())
                                     <a href="{{ route('seat.swap.form', $item->id) }}" class="btn btn-outline-primary w-100 py-2 fw-semibold">
                                         <i class="fas fa-exchange-alt me-1"></i> Request Seat Swap
                                     </a>

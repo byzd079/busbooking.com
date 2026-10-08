@@ -12,6 +12,44 @@
             </a>
         </div>
 
+        <!-- Seat Hold Countdown Timer Banner -->
+        <div class="card mb-4 rounded-3 shadow-sm border-0" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 5px solid #f59e0b !important;" id="hold-timer-alert">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="background: #ffffff; width: 44px; height: 44px;">
+                        <i class="fas fa-hourglass-half fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-6">Seats Temporarily Reserved</div>
+                        <div class="small text-muted">Complete payment within this time to confirm your seats.</div>
+                    </div>
+                </div>
+                <div class="text-end ms-auto">
+                    <div class="small text-muted fw-semibold">Time Remaining</div>
+                    <div class="fw-bold fs-3 font-monospace text-danger" id="countdown-clock">10:00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 rounded-3 shadow-sm border-0 d-none" style="background: #fef2f2; border-left: 5px solid #ef4444 !important;" id="hold-expired-alert">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="background: #ffffff; width: 44px; height: 44px;">
+                        <i class="fas fa-exclamation-triangle fs-4 text-danger"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-danger fs-6">Reservation Expired!</div>
+                        <div class="small text-muted">Your 10-minute temporary seat reservation has expired. Please select your seats again.</div>
+                    </div>
+                </div>
+                <div class="ms-auto">
+                    <a href="{{ route('seat_view', ['id' => $bus->id]) }}" class="btn btn-danger btn-sm px-3 py-2 fw-bold">
+                        <i class="fas fa-redo me-1"></i> Reselect Seats
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <!-- Order Breakdown Card -->
         <div class="glass-card mb-4">
             <h1 class="h4 fw-bold text-dark border-bottom pb-3 mb-3">
@@ -127,4 +165,45 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const expiresAt = new Date("{{ isset($expiresAt) ? $expiresAt->toISOString() : now()->addMinutes(10)->toISOString() }}").getTime();
+    const clock = document.getElementById('countdown-clock');
+    const timerAlert = document.getElementById('hold-timer-alert');
+    const expiredAlert = document.getElementById('hold-expired-alert');
+    const submitBtn = document.querySelector('button[type="submit"]');
+
+    function updateTimer() {
+        const now = new Date().getTime();
+        const diff = expiresAt - now;
+
+        if (diff <= 0) {
+            if (clock) clock.textContent = '00:00';
+            if (timerAlert) timerAlert.classList.add('d-none');
+            if (expiredAlert) expiredAlert.classList.remove('d-none');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.remove('btn-primary-touch');
+                submitBtn.classList.add('btn-secondary');
+                submitBtn.innerHTML = '<i class="fas fa-times me-2"></i> Reservation Expired';
+            }
+            clearInterval(timerInterval);
+            return;
+        }
+
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        if (clock) {
+            clock.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        }
+    }
+
+    updateTimer();
+    const timerInterval = setInterval(updateTimer, 1000);
+});
+</script>
 @endsection

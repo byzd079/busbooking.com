@@ -1,9 +1,3 @@
-databases:
-  - name: busbooking-db
-    plan: free
-    databaseName: busbooking
-    user: busbooking
-
 services:
   - type: web
     name: busbooking
@@ -31,25 +25,17 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromDatabase:
-          name: busbooking-db
-          property: host
+        value: db.vqlnsvniymspkkmsrktt.supabase.co
       - key: DB_PORT
-        fromDatabase:
-          name: busbooking-db
-          property: port
+        value: "5432"
       - key: DB_DATABASE
-        fromDatabase:
-          name: busbooking-db
-          property: database
+        value: postgres
       - key: DB_USERNAME
-        fromDatabase:
-          name: busbooking-db
-          property: user
+        value: postgres
       - key: DB_PASSWORD
-        fromDatabase:
-          name: busbooking-db
-          property: password
+        value: "N@rdvpn9268"
+      - key: DB_SSLMODE
+        value: require
       - key: SESSION_DRIVER
         value: database
       - key: SESSION_SECURE_COOKIE

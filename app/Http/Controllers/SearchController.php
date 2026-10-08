@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Models\Order;
 use App\Models\SeatRating;
+use App\Models\SeatHold;
+use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class SearchController extends Controller
@@ -143,7 +145,60 @@ class SearchController extends Controller
         if (!count($ticketlist)) {
             return redirect()->back()->with('error', 'Please select at least a seat and login!!');
         }
-        return view('exampleHosted', compact('ticketlist', 'bus'));
+
+        // Clean up globally expired holds
+        SeatHold::cleanupExpired();
+
+        $seatIndexes = array_flip($checkboxNames);
+        $view = $bus->view;
+
+        // Check if any seat is already booked permanently in bus->view
+        foreach ($ticketlist as $seat) {
+            $index = $seatIndexes[$seat] ?? null;
+            if ($index !== null && ($view[$index] ?? '1') !== '0') {
+                return redirect()->route('seat_view', $bus->id)
+                    ->with('error', "Seat {$seat} has already been booked. Please select another seat.");
+            }
+        }
+
+        $sessionId = session()->getId();
+
+        // Check if any selected seat is currently on hold by another customer
+        $heldByOther = SeatHold::where('bus_id', $bus->id)
+            ->where('expires_at', '>', now())
+            ->where('session_id', '!=', $sessionId)
+            ->whereIn('seat_name', $ticketlist)
+            ->pluck('seat_name')
+            ->all();
+
+        if (!empty($heldByOther)) {
+            return redirect()->route('seat_view', $bus->id)
+                ->with('error', 'Seat ' . implode(', ', $heldByOther) . ' is temporarily on hold by another customer. Please choose different seats.');
+        }
+
+        // Release any previous holds created by this session
+        SeatHold::where('session_id', $sessionId)->delete();
+
+        // Hold selected seats for 10 minutes
+        $expiresAt = now()->addMinutes(10);
+        try {
+            DB::transaction(function () use ($bus, $ticketlist, $sessionId, $expiresAt) {
+                foreach ($ticketlist as $seat) {
+                    SeatHold::create([
+                        'bus_id'     => $bus->id,
+                        'seat_name'  => $seat,
+                        'session_id' => $sessionId,
+                        'user_id'    => auth()->id(),
+                        'expires_at' => $expiresAt,
+                    ]);
+                }
+            });
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->route('seat_view', $bus->id)
+                ->with('error', 'One or more of your selected seats were just put on hold by another customer. Please choose available seats.');
+        }
+
+        return view('exampleHosted', compact('ticketlist', 'bus', 'expiresAt'));
     }
 
 
@@ -240,7 +295,19 @@ class SearchController extends Controller
         // Retrieve the bus details based on the coach number
         $bus = Bus::find($id);
         if ($bus) {
-            return view('seat_view', compact('bus'));
+            // Clean up globally expired holds
+            SeatHold::cleanupExpired();
+
+            // When returning to seat selection, release any existing holds for this session
+            SeatHold::where('session_id', session()->getId())->delete();
+
+            // Get active held seats for this bus
+            $heldSeats = SeatHold::where('bus_id', $bus->id)
+                ->where('expires_at', '>', now())
+                ->pluck('seat_name')
+                ->all();
+
+            return view('seat_view', compact('bus', 'heldSeats'));
         }
 
         return view('check', compact('id', 'ticketlist'));

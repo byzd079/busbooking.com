@@ -59,20 +59,24 @@
 
                             <div class="col-md-3 text-md-end">
                                 @if($swap->status === 'Pending')
-                                    <div class="d-flex gap-2">
-                                        <form action="{{ route('seat.swap.accept', $swap->id) }}" method="POST" class="flex-grow-1">
-                                            @csrf
-                                            <button type="submit" class="btn btn-success btn-sm w-100 py-2 fw-bold">
-                                                <i class="fas fa-check me-1"></i> Accept
-                                            </button>
-                                        </form>
-                                        <form action="{{ route('seat.swap.decline', $swap->id) }}" method="POST" class="flex-grow-1">
-                                            @csrf
-                                            <button type="submit" class="btn btn-outline-danger btn-sm w-100 py-2">
-                                                <i class="fas fa-times me-1"></i> Decline
-                                            </button>
-                                        </form>
-                                    </div>
+                                    @if($swap->requesterOrder && $swap->requesterOrder->canSwapSeats())
+                                        <div class="d-flex gap-2">
+                                            <form action="{{ route('seat.swap.accept', $swap->id) }}" method="POST" class="flex-grow-1">
+                                                @csrf
+                                                <button type="submit" class="btn btn-success btn-sm w-100 py-2 fw-bold">
+                                                    <i class="fas fa-check me-1"></i> Accept
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('seat.swap.decline', $swap->id) }}" method="POST" class="flex-grow-1">
+                                                @csrf
+                                                <button type="submit" class="btn btn-outline-danger btn-sm w-100 py-2">
+                                                    <i class="fas fa-times me-1"></i> Decline
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="badge bg-secondary fs-6">Expired</span>
+                                    @endif
                                 @else
                                     <span class="badge {{ $swap->status === 'Accepted' ? 'bg-success' : 'bg-secondary' }} fs-6">
                                         {{ $swap->status }}

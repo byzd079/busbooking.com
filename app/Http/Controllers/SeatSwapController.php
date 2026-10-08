@@ -28,6 +28,10 @@ class SeatSwapController extends Controller
             return redirect()->route('purchase_history')->with('error', 'Unauthorized access');
         }
 
+        if (!$order->canSwapSeats()) {
+            return redirect()->route('purchase_history')->with('error', 'Seat swapping is only allowed until 1 hour after the journey begins.');
+        }
+
         $bus = Bus::findOrFail($order->bus_id);
         $mySeats = is_array(json_decode($order->ticketlist, true)) ? json_decode($order->ticketlist, true) : [$order->ticketlist];
 
@@ -77,6 +81,10 @@ class SeatSwapController extends Controller
 
         if ($requesterOrder->email !== Auth::user()->email) {
             return redirect()->route('purchase_history')->with('error', 'Unauthorized access');
+        }
+
+        if (!$requesterOrder->canSwapSeats()) {
+            return redirect()->route('purchase_history')->with('error', 'Seat swapping is only allowed until 1 hour after the journey begins.');
         }
 
         $targetUser = User::where('email', $targetOrder->email)->first();
@@ -157,6 +165,11 @@ class SeatSwapController extends Controller
 
         if ($swap->status !== 'Pending') {
             return redirect()->back()->with('error', 'This swap request is no longer pending.');
+        }
+
+        $requesterOrder = Order::findOrFail($swap->requester_order_id);
+        if (!$requesterOrder->canSwapSeats()) {
+            return redirect()->back()->with('error', 'Seat swap deadline has passed. Swapping is only allowed until 1 hour after the journey begins.');
         }
 
         try {

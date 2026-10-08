@@ -9,6 +9,7 @@ use App\Library\SslCommerz\SslCommerzNotification;
 use Illuminate\Support\Str;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\SeatHold;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 
@@ -45,6 +46,9 @@ class SslCommerzPaymentController extends Controller
         $ticketlist = array_values(array_unique($validated['ticketlist']));
         $seatIndexes = array_flip($this->seatNames($bus->total_seats));
 
+        // Clean up globally expired holds
+        SeatHold::cleanupExpired();
+
         foreach ($ticketlist as $seat) {
             if (!array_key_exists($seat, $seatIndexes)) {
                 return redirect()->back()->withInput()->with('error', "Seat {$seat} does not exist on this coach.");
@@ -54,6 +58,33 @@ class SslCommerzPaymentController extends Controller
             if (($bus->view[$index] ?? '1') !== '0') {
                 return redirect()->back()->withInput()->with('error', "Seat {$seat} is no longer available.");
             }
+        }
+
+        $sessionId = session()->getId();
+
+        // Check if any seat is temporarily held by another customer
+        $heldByOther = SeatHold::where('bus_id', $bus->id)
+            ->where('expires_at', '>', now())
+            ->where('session_id', '!=', $sessionId)
+            ->whereIn('seat_name', $ticketlist)
+            ->pluck('seat_name')
+            ->all();
+
+        if (!empty($heldByOther)) {
+            return redirect()->back()->withInput()->with('error', 'Seat ' . implode(', ', $heldByOther) . ' is temporarily on hold by another customer.');
+        }
+
+        // Ensure hold for this session (extends hold for 10 minutes while on payment gateway)
+        $expiresAt = now()->addMinutes(10);
+        foreach ($ticketlist as $seat) {
+            SeatHold::updateOrCreate(
+                ['bus_id' => $bus->id, 'seat_name' => $seat],
+                [
+                    'session_id' => $sessionId,
+                    'user_id'    => Auth::id(),
+                    'expires_at' => $expiresAt,
+                ]
+            );
         }
 
         $post_data = [];
@@ -112,6 +143,12 @@ class SslCommerzPaymentController extends Controller
                 'ticketlist' => json_encode($ticketlist),
             ]
         );
+
+        // Link the temporary holds to this order
+        SeatHold::where('bus_id', $bus->id)
+            ->where('session_id', $sessionId)
+            ->whereIn('seat_name', $ticketlist)
+            ->update(['order_id' => $update_product->id]);
 
         $sslc = new SslCommerzNotification();
         # initiate(Transaction Data , false: Redirect to SSLCOMMERZ gateway/ true: Show all the Payement gateway here )
@@ -263,6 +300,13 @@ class SslCommerzPaymentController extends Controller
                 'card_issuer' => $cardIssuer,
             ]);
 
+            // Release temporary holds now that seats are permanently booked
+            SeatHold::where('order_id', $lockedOrder->id)->delete();
+            $bookedSeats = json_decode($lockedOrder->ticketlist, true) ?: [];
+            if (!empty($bookedSeats)) {
+                SeatHold::where('bus_id', $lockedOrder->bus_id)->whereIn('seat_name', $bookedSeats)->delete();
+            }
+
             return true;
         });
     }
@@ -335,6 +379,16 @@ class SslCommerzPaymentController extends Controller
         if ($order->status === 'Pending') {
             $order->update(['status' => $status]);
         }
+
+        // Instantly release held seats on fail / cancel
+        if ($order) {
+            SeatHold::where('order_id', $order->id)->delete();
+            $cancelledSeats = json_decode($order->ticketlist, true) ?: [];
+            if (!empty($cancelledSeats)) {
+                SeatHold::where('bus_id', $order->bus_id)->whereIn('seat_name', $cancelledSeats)->delete();
+            }
+        }
+        SeatHold::where('session_id', session()->getId())->delete();
 
         return redirect()->route('home')->with('error', $message);
     }

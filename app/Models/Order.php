@@ -99,4 +99,44 @@ class Order extends Model
         $now = Carbon::now();
         return $now->diffInHours($tripDateTime, false);
     }
+
+    /**
+     * Check if seat swap is allowed (allowed until 1 hour after departure).
+     */
+    public function canSwapSeats(): bool
+    {
+        if (!in_array($this->status, ['Processing', 'Successful'])) {
+            return false;
+        }
+
+        $bus = Bus::find($this->bus_id);
+        if (!$bus || empty($bus->date) || empty($bus->departing_time)) {
+            return false;
+        }
+
+        try {
+            $tripDateTime = Carbon::parse($bus->date . ' ' . $bus->departing_time);
+            $swapDeadline = $tripDateTime->copy()->addHour();
+            return Carbon::now()->lte($swapDeadline);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get the deadline for seat swapping (1 hour after departure).
+     */
+    public function getSwapDeadline(): ?Carbon
+    {
+        $bus = Bus::find($this->bus_id);
+        if (!$bus || empty($bus->date) || empty($bus->departing_time)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($bus->date . ' ' . $bus->departing_time)->addHour();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
 }
